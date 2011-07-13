@@ -1,0 +1,5 @@
+The Java files in src/ with a process() method are to be opened, 
+compiled, and loaded in JAS3 and run with .slcio files loaded.
+
+At present, the only useful one is stats.java and it has only been 
+tested on single 10GeV electron events.
