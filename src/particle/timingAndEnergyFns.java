@@ -43,8 +43,14 @@ public class timingAndEnergyFns extends Driver {
         List<List<SimCalorimeterHit>> myHitCol = event.get(SimCalorimeterHit.class);
         for(List<SimCalorimeterHit> myHits : myHitCol) {
             for(SimCalorimeterHit hit : myHits){
+                /*
                 if(window[0] <= hit.getTime() && hit.getTime() <= window[1]) {
                     E_sum += hit.getRawEnergy();
+                }
+                */
+                if(hit.getTime() < window[1]){
+                    E_sum += hit.getRawEnergy();
+                    System.out.println(E_sum);
                 }
             }
         }
@@ -112,8 +118,7 @@ public class timingAndEnergyFns extends Driver {
     
     //gets correct time as described, c in mm/ns
     public double getCorrectTime(SimCalorimeterHit hit){
-        double[] pos = hit.getPosition();
-        return getAbsRadius(pos)/299.792458;
+        return (hit.getTime()-getAbsRadius(hit.getPosition())/299.792458);
     }
     
     //simply calculates radius to [x,y,z] from [0,0,0]
@@ -122,4 +127,6 @@ public class timingAndEnergyFns extends Driver {
         
         return Math.sqrt(pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2]); 
     }
+    
+    
 }

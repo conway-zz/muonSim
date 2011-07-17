@@ -27,7 +27,7 @@ public class stats extends timingAndEnergyFns {
              //using "\n" will only work on UNIX
             FileWriter log = new FileWriter("../../log.txt", true);
         
-         double stdthresh = 1.0;
+         double stdthresh = .98;
          
          IAnalysisFactory af = IAnalysisFactory.create();
          ITree tree = af.createTreeFactory().create();
@@ -77,6 +77,40 @@ public class stats extends timingAndEnergyFns {
              cl2d.fill(threshhold, detectedE);
              aida.cloud2D("energy vs thresh").fill(threshhold, detectedE);
          }
+         
+         //plot E/t
+         
+         double Etotal = 0;
+         List<List<SimCalorimeterHit>> myHitCol2 = event.get(SimCalorimeterHit.class);
+         for(List<SimCalorimeterHit> myHits : myHitCol2) {
+            for(SimCalorimeterHit myhit : myHits){
+                
+                Etotal = Etotal+ myhit.getRawEnergy();
+                //aida.cloud1D("E/t").fill(myhit.getTime(), Etotal);
+                aida.histogram1D("deposits over time", 100, 4, 5).fill(myhit.getTime(), Etotal);
+            }
+         }
+         Etotal = 0;
+         for(List<SimCalorimeterHit> myHits : myHitCol2) {
+            for(SimCalorimeterHit myhit : myHits){
+                
+                Etotal = Etotal + myhit.getRawEnergy();
+                //aida.cloud1D("E/t").fill(myhit.getTime(), Etotal);
+                aida.histogram1D("deposits over corrected time", 100, 4, 5).fill(getCorrectTime(myhit), Etotal);
+            }
+         }
+         Etotal = 0;
+         for(List<SimCalorimeterHit> myHits : myHitCol2) {
+            for(SimCalorimeterHit myhit : myHits){
+                
+                Etotal += myhit.getRawEnergy();
+                //aida.cloud1D("E/t").fill(myhit.getTime(), Etotal);
+                aida.histogram1D("integral E/t", 100, 4, 5).fill(getCorrectTime(myhit), Etotal);
+            }
+         }
+         
+         
+         
          
          
          //returns energy detected with given threshhold and getTprime()
