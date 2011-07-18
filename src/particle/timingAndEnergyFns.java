@@ -128,5 +128,6 @@ public class timingAndEnergyFns extends Driver {
         return Math.sqrt(pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2]); 
     }
     
+    //want to plot distance over time
     
 }

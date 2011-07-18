@@ -58,73 +58,54 @@ public class stats2 extends timingAndEnergyFns {
         
          IHistogram1D hTcals = hf.createHistogram1D("hTcals", "Histogram of T-cals", 
                  calhits/10,4.2,4.5);
-         IHistogram1D hTprimes = hf.createHistogram1D("hTprimes", "Histogram of T-Primes",
+         IHistogram1D hrc = hf.createHistogram1D("hRC", "Histogram of r/cs",
                  calhits/10,4.2,4.5);
-         IHistogram1D hTprimes2 = hf.createHistogram1D("hTprimes2", "Histogram of T-Primes2",
+         IHistogram1D hTprimes = hf.createHistogram1D("hTprimes", "Histogram of T-Primes",
                  calhits,-0.0125,0.04);
-         IHistogram1D tp2En = hf.createHistogram1D("tp2En", "Histogram of T-Primes2 weighted by energy",
+         IHistogram1D tpEn = hf.createHistogram1D("tpEn", "Histogram of T-Primes weighted by energy",
                  calhits,-0.0125,0.04);
          IHistogram1D hRadii = hf.createHistogram1D("hRadii", "Histogram of Radii",
                  calhits,1200,1900);
-         IHistogram1D tctp = hf.createHistogram1D("tctp", "Histogram of T-cals weighted by T-Prime",
-                 calhits,4,4.8);
          IHistogram1D tcRad = hf.createHistogram1D("tcRad","Histogram of T-cals weighted by radius",
                  calhits,4,4.8);
-         IHistogram1D tpRad = hf.createHistogram1D("tpRad", "Histogram of T-primes weighted by radius",
+         IHistogram1D trcRad = hf.createHistogram1D("trcRad", "Histogram of r/c's weighted by radius",
                  calhits,4,4.8);
          IHistogram1D tcEn = hf.createHistogram1D("tcEn", "Histogram of T-cals weighted by Energy",
                  calhits,4.2,4.5);
-         IHistogram1D tpEn = hf.createHistogram1D("tpEn", "Histogram of T-primes weighted by Energy",
+         IHistogram1D trcEn = hf.createHistogram1D("tprcEn", "Histogram of r/c's weighted by Energy",
                  calhits,4.2,4.5);
-         
+         IHistogram1D rEn = hf.createHistogram1D("rEn", "rad by E",
+                 calhits,1200,1900);
          
          for(List<SimCalorimeterHit> myHits : myHitCol) {
             for(SimCalorimeterHit myhit : myHits){
+
+                
                 //Plot histogram of t-cals  
                 hTcals.fill(myhit.getTime());
+
                 
-                aida.histogram1D("Histogram of T-cals",calhits,4,4.8
-                        ).fill(myhit.getTime());
+                //Plot histogram of r/c's
+                hrc.fill(getCorrectTime(myhit));
+             
                 
                 //Plot histogram of t-primes
-                hTprimes.fill(getCorrectTime(myhit));
+                hTprimes.fill(myhit.getTime()-getAbsRadius(myhit.getPosition())/299.792458);
                 
-                aida.histogram1D("Histogram of T-primes",calhits,4,4.8
-                        ).fill(getCorrectTime(myhit));
-                
-                //Plot histogram of t-primes2
-                hTprimes2.fill(myhit.getTime()-getAbsRadius(myhit.getPosition())/299.792458);
-                
-                //Plot histogram of t-primes2 weighted by energy
-                tp2En.fill(myhit.getTime()-getAbsRadius(myhit.getPosition())/299.792458,
+                //Plot histogram of t-primes weighted by energy
+                tpEn.fill(myhit.getTime()-getAbsRadius(myhit.getPosition())/299.792458,
                         myhit.getRawEnergy());
                 
                 //Plot histogram of radii
                 hRadii.fill(getAbsRadius(myhit.getPosition()));
-                
-                aida.histogram1D("Histogram of Radii",calhits,1200,1900
-                        ).fill(getAbsRadius(myhit.getPosition()));
-                
-                //Plot histogram of t-cals weighted by t-prime
-                tctp.fill(myhit.getTime(), getCorrectTime(myhit));
-                
-                aida.histogram1D("Histogram of T-cals weighted by T-prime",
-                        calhits,4,6).fill(myhit.getTime(), getCorrectTime(myhit));
+
                 
                 //Plot histogram of t-cals weighted by radius
                 tcRad.fill(myhit.getTime(), 
                                           getAbsRadius(myhit.getPosition()));
                 
-                aida.histogram1D("Histogram of T-cals weighted by radius",
-                        calhits,4,6).fill(myhit.getTime(), 
-                                          getAbsRadius(myhit.getPosition()));
-                
                 //Plot histogram of t-primes weighted by radius
-                tpRad.fill(getCorrectTime(myhit), 
-                                             getAbsRadius(myhit.getPosition()));
-                
-                aida.histogram1D("Histogram of T-primes weighted by radius",
-                        calhits,4,6).fill(getCorrectTime(myhit), 
+                trcRad.fill(getCorrectTime(myhit), 
                                              getAbsRadius(myhit.getPosition()));
                 
                 //Plot histogram of T-cals weighted by Energy
@@ -132,6 +113,9 @@ public class stats2 extends timingAndEnergyFns {
                 
                 //Plot histogram of T-primes weighted by Energy
                 tpEn.fill(getCorrectTime(myhit), myhit.getRawEnergy());
+                
+                //rEn
+                rEn.fill(getAbsRadius(myhit.getPosition()), myhit.getRawEnergy());
                 
             }
          }
@@ -146,7 +130,7 @@ public class stats2 extends timingAndEnergyFns {
             
             IHistogram1D intTpEn = integratedHist(tpEn, hf, E_cal, .95);
             
-            IHistogram1D intTprimeEn = integratedHist(tp2En, hf, E_cal, .95);
+            IHistogram1D intTprimeEn = integratedHist(tpEn, hf, E_cal, .95);
             
             /*
             System.out.println("Threshhold: 95% of detectable energy");
