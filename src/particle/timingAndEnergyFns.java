@@ -8,10 +8,9 @@ import org.lcsim.event.EventHeader;
 import org.lcsim.util.Driver;
 import java.util.List;
 
-public class timingAndEnergyFns extends Driver {
+public abstract class timingAndEnergyFns implements datasetProcessor{
     
-    //local threshhold variable, this value seems to work for now
-    public double stdthresh = .98;
+    
     
     public double totalEnergy(EventHeader event){
         double E_out = 0.0;
@@ -35,6 +34,33 @@ public class timingAndEnergyFns extends Driver {
         }
         return tmin;
     }
+     //Get time window for calorimeter hits in thresh of energy, returns 
+     //number of hits counted as well (rv[3]++)
+     public double[] calTimer(List<SimCalorimeterHit> hitcol, double thresh){
+         if(!((thresh>0.0)&&(thresh<=1.0))) {
+           System.out.println("eventTimer needs threshhold (0,1]");
+        }    
+        double rv[] = new double[3];
+        double winmin = 0;
+        double winmax = 0;
+        double totE = 0;
+        for(SimCalorimeterHit myhit : hitcol){
+            winmin = Math.min(winmin, myhit.getTime());
+            winmax = Math.max(winmax, myhit.getTime());
+            totE += myhit.getRawEnergy();
+        }
+        double sumE = totE;
+        while((sumE/totE)>thresh){
+            rv[1] -= 0.001;
+            for(SimCalorimeterHit myhit : hitcol){
+                if(myhit.getTime()<rv[1]){
+                    sumE -= myhit.getRawEnergy();
+                    rv[3]++;
+                }
+            }            
+        }
+        return rv;
+     }
      
     //takes event and timing window, integrates E over dt.
     //window[lowerbound, upperbound]
@@ -43,15 +69,15 @@ public class timingAndEnergyFns extends Driver {
         List<List<SimCalorimeterHit>> myHitCol = event.get(SimCalorimeterHit.class);
         for(List<SimCalorimeterHit> myHits : myHitCol) {
             for(SimCalorimeterHit hit : myHits){
-                /*
                 if(window[0] <= hit.getTime() && hit.getTime() <= window[1]) {
                     E_sum += hit.getRawEnergy();
                 }
-                */
+                /*
                 if(hit.getTime() < window[1]){
                     E_sum += hit.getRawEnergy();
-                    System.out.println(E_sum);
                 }
+                */
+                
             }
         }
         return E_sum;
@@ -65,15 +91,15 @@ public class timingAndEnergyFns extends Driver {
     //increment window by .01ns each loop.
     public double[] eventTimer(EventHeader event, double threshhold){
        
-        if(!((threshhold>0.0)&&(threshhold<1.0))) {
-           System.out.println("eventTimer needs threshhold between 0 and1");
+        if(!((threshhold>0.0)&&(threshhold<=1.0))) {
+           System.out.println("eventTimer needs threshhold (0,1]");
         }                
                 
         double rv[] = new double[2];
         rv[0] = timeFirstHit(event);
         rv[1] = rv[0];
         double total = totalEnergy(event);
-        while((windowEnergy(event, rv)/total)<(threshhold)){
+        while((windowEnergy(event, rv)/total)<threshhold){
             rv[1] += 0.001;
         }
         return rv;
@@ -97,6 +123,8 @@ public class timingAndEnergyFns extends Driver {
     //averages corrected times
     //uses eventTimer to dynamically cut off end time based on threshold
     //manually figuring threshhold for now
+    /*
+     * Uncomment when you have a real implementation
     public double getTprime(EventHeader event) {
         System.out.println("what the..?");
         double sum = 0;
@@ -108,16 +136,16 @@ public class timingAndEnergyFns extends Driver {
             for(SimCalorimeterHit myhit : myHits){
                 if(myhit.getTime()<cutoff){
                     events++;
-                    sum += getCorrectTime(myhit);
+                    sum += getRC(myhit);
                 }
             }
         }       
         return (sum/events);
                
-    }
+    }*/
     
     //gets correct time as described, c in mm/ns
-    public double getCorrectTime(SimCalorimeterHit hit){
+    public double getRC(SimCalorimeterHit hit){
         return (hit.getTime()-getAbsRadius(hit.getPosition())/299.792458);
     }
     

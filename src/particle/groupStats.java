@@ -2,15 +2,17 @@ import org.lcsim.event.EventHeader;
 import org.lcsim.event.SimCalorimeterHit;
 import java.util.List;
 import hep.aida.*;
-import java.io.*;
+
 /**
- * Another graphing program because stats 
- * is getting messy and a little misdirected.
+ * A couple functions to get statistics from a single event,
+ * grouping all calorimetric data together.
+ * Not sure if histToCSV is working yet
+ * 
  * @author agias
  */
-public class stats2 extends timingAndEnergyFns {
+public abstract class groupStats extends timingAndEnergyFns implements datasetProcessor{
     
-    protected void process(EventHeader event) {
+    protected void processGroup(EventHeader event) {
         
         IAnalysisFactory af = IAnalysisFactory.create();
         ITree tree = null;
@@ -27,6 +29,7 @@ public class stats2 extends timingAndEnergyFns {
         }
         IHistogramFactory hf = af.createHistogramFactory(tree);
         
+        //cut off the last events that add the last 1%
         double[] window = eventTimer(event, .99);
         
         //count hits in event
@@ -46,12 +49,14 @@ public class stats2 extends timingAndEnergyFns {
             for(SimCalorimeterHit myhit : myHits){
                 
                 if(myhit.getTime()<window[1]){
+                    
+                    System.out.println(myhit.getSystemId());
                     t_cal_max = Math.max(t_cal_max, myhit.getTime());
                     t_cal_min = Math.min(t_cal_min, myhit.getTime());
                     rmax = Math.max(rmax, getAbsRadius(myhit.getPosition()));
                     rmin = Math.min(rmin, getAbsRadius(myhit.getPosition()));
-                    rcmax = Math.max(rcmax, getCorrectTime(myhit));
-                    rcmin = Math.min(rcmin, getCorrectTime(myhit));
+                    rcmax = Math.max(rcmax, getRC(myhit));
+                    rcmin = Math.min(rcmin, getRC(myhit));
                     tpmax = Math.max(tpmax, myhit.getTime()-getAbsRadius(myhit.getPosition())/299.792458);
                     tpmin = Math.min(tpmin, myhit.getTime()-getAbsRadius(myhit.getPosition())/299.792458);
                 
@@ -104,7 +109,7 @@ public class stats2 extends timingAndEnergyFns {
 
                 
                 //Plot histogram of r/c's
-                hrc.fill(getCorrectTime(myhit));
+                hrc.fill(getRC(myhit));
              
                 
                 //Plot histogram of t-primes
@@ -123,14 +128,14 @@ public class stats2 extends timingAndEnergyFns {
                                           getAbsRadius(myhit.getPosition()));
                 
                 //Plot histogram of t-primes weighted by radius
-                trcRad.fill(getCorrectTime(myhit), 
+                trcRad.fill(getRC(myhit), 
                                              getAbsRadius(myhit.getPosition()));
                 
                 //Plot histogram of T-cals weighted by Energy
                 tcEn.fill(myhit.getTime(), myhit.getRawEnergy());
                 
                 //Plot histogram of T-primes weighted by Energy
-                trcEn.fill(getCorrectTime(myhit), myhit.getRawEnergy());
+                trcEn.fill(getRC(myhit), myhit.getRawEnergy());
                 
                 //rEn
                 rEn.fill(getAbsRadius(myhit.getPosition()), myhit.getRawEnergy());
@@ -154,74 +159,7 @@ public class stats2 extends timingAndEnergyFns {
     
 
 
-    
-    private IHistogram1D integratedHist(IHistogram1D hist, IHistogramFactory hf,
-            double maximum, double threshhold){    
-        
-        boolean isAboveThresh = false;
-        boolean hitYet = false;
-        double firstTime=0;
-        
-        IHistogram1D intHist = hf.createHistogram1D("int"+hist.title(), 
-                hist.title()+", integrated", 
-                hist.axis().bins(), 
-                hist.axis().lowerEdge(), 
-                hist.axis().upperEdge());
-        
-        double sum = 0;
-        for(int i=0; i<hist.axis().bins() ; i++){
-            double xvalue = hist.axis().binCenter(i);
-            sum += hist.binHeight(i);            
-            
-            intHist.fill(xvalue,sum);
-            if(!hitYet){
-                if(sum>0){
-                    hitYet=true;
-                    firstTime=xvalue;
-                }
-            }
-            if(!isAboveThresh) {
-                if(sum>maximum*threshhold){
-                    isAboveThresh = true;
-                    System.out.println(intHist.title());
-                    System.out.println("Threshhold: "+threshhold);
-                    System.out.println("Threshhold reached at "+
-                            (xvalue-firstTime));
-                }
-            }
-            
-        }
-        
-        return intHist;
-    }
-    
-    
-    //creates a CSV file from histogram1D
-    //uses weighted mean of bin for x-axis, height for y
-    private void histToCSV(IHistogram1D hist){
-        try{
-            // Create file 
-            FileWriter fstream = new FileWriter("csv/"+hist.title()+".csv");
-            BufferedWriter out = new BufferedWriter(fstream);
-            out.write(hist.title()+" in CSV format\n");
-            out.write("Entries: "+hist.axis().bins()+"\n");
-            out.write("Low: "+hist.axis().lowerEdge()+"\n");
-            out.write("High: "+hist.axis().upperEdge()+"\n");
-            out.write("Mean: "+hist.mean()+"\n");
-            out.write("RMS: "+ hist.rms()+"\n\n");
-            
-            for(int i=0; i<hist.axis().bins(); i++){
-                out.write(Double.toString(hist.binMean(i))+","
-                         +Double.toString(hist.binHeight(i))+"\n");
-            }
-            out.write("Hello Java");
-            //Close the output stream
-            out.close();
-        } catch (Exception e){ //Catch exception if any
-            System.err.println("Error: " + e.getMessage());
-        }
-        
-    }
+   
 }
     
     
