@@ -8,7 +8,7 @@ import org.lcsim.event.EventHeader;
 import org.lcsim.util.Driver;
 import java.util.List;
 
-public abstract class timingAndEnergyFns implements datasetProcessor{
+public class timingAndEnergyFns {
     
     
     

@@ -1,30 +1,31 @@
 /*
- * Implements groupStats functions for dataset
+ * Fills dataObj's
  */
 import org.lcsim.event.EventHeader;
-public abstract class datasetPROCESS implements datasetProcessor{
+
+public abstract class datasetPROCESS implements statsInterface{
     
     //fill stats object for whole detector
-    public void processGROUP(EventHeader event, statsObj stats){    
+    public void processGROUP(EventHeader event, dataObj data){    
         //Count events processed
-        stats.EVENTS++;
+        data.EVENTS++;
         //Sum total MC Energy
-        stats.addMCE(event);
+        data.addMCE(event);
         //sum total detectable energy over all hits.
-        stats.addEn(event);
+        data.addEn(event);
         //add hits to stats.hitsDPS
-        stats.hitsToDPS(event);
+        data.hitsToDPS(event);
     }
     //fill stats object for detector cal
-    public void processCAL(EventHeader event, statsObj stats, String cal){
+    public void processCAL(EventHeader event, dataObj data, String cal){
         //Count events processed
-        stats.EVENTS++;
+        data.EVENTS++;
         //Sum total MC Energy
-        stats.addMCE(event);
+        data.addMCE(event);
         //sum total detectable energy over all hits.
-        stats.addEn(event,cal);
+        data.addEn(event,cal);
         //add hits to stats.hitsDPS
-        stats.hitsToDPS(event,cal);
+        data.hitsToDPS(event,cal);
     }
     
 }

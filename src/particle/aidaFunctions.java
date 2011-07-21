@@ -1,74 +1,19 @@
 /*
- * Uses techniques developed in group and sepStats to process 
- * entire datasets and produce information about E-MC, E-Cal and t'
- * for extending subclasses (procEM, procH, ect)
+ * Class of functions that exist specifically to work with 
+ * arbitrary AIDA functions.
+ * If it deals with energy, timing, etc, put it somewhere else.
  * @author Alex Conway
  */
-import org.lcsim.event.EventHeader;
-import org.lcsim.event.SimCalorimeterHit;
-import java.util.List;
 import hep.aida.*;
 import java.io.*;
-import org.lcsim.event.MCParticle;
-import java.lang.String;
 
 
-public abstract class datasetStats implements datasetProcessor{
-    
-    
-    
-    /*
-    //Initialize dataset creation
-    
-    //ROOT subfolders to create in runOnce
-    //Each folder name will be the same as the 
-    String[] FOLDERS = {"GROUP","EM","H"};
-    
-    //safely create ROOT tree for all data collectors
-    //to be run from runOnce in processor
-    public void initROOT(){
-        try{
-            ROOT = af.createTreeFactory().create("ROOT.aida","xml",false,true);
-            //tree will overwrite objects created with same path
-            ROOT.setOverwrite();
-        }
-        catch (java.io.IOException e) {
-        System.err.println("could not create ROOT.aida file.  Sowwy =("+
-                    e.getMessage());          
-        }
-    }
-    
-    //Initialize ITree branch, mount as root/branch/
-    //Allows modular method for easily creating any new trees
-   
-    public void initTree(ITree root, String branch){
-        ITree temp = null;
-        try{
-            temp = af.createTreeFactory().create(branch+".aida","xml",false,true);
-            //tree will overwrite objects created with same path
-            temp.setOverwrite();
-        }
-        catch (java.io.IOException e) {
-        System.err.println("could not create "+branch+".aida file.  Sowwy =("+
-                    e.getMessage());          
-        }
-        root.mkdir(branch+"/");
-        root.mount(branch+"/",temp,"/");
-    }
-    
-    //Initialize any ITrees, variables, etc needed before running 
-    //anything else in process().  Check EVENTS == 0 in process()
-    //to run for efficiency
-    public void runOnce(){
-        initROOT();
-        for(String folder : FOLDERS){
-            initTree(ROOT, folder);
-        }        
-    }
-    */
-    
 
-     //Produce integral 'histogram' of selected histogram
+public abstract class aidaFunctions implements statsInterface{
+    
+    //
+    
+    //Produce integral 'histogram' of selected histogram
     //print when integral reaches threshhold (range [0,1]) percentage of maximum
     //maximum generally should be the value of the histogram integrated
     //over all time

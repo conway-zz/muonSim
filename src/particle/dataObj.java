@@ -6,36 +6,36 @@ import org.lcsim.event.MCParticle;
 import hep.aida.*;
 
 /*
- * Simple class to hold some stats
+ * Simple object to hold some data with methods for filling itself
  * instantiate one for every processXX() run in process.
+ * Basically for having permanent data object through process run.
+ *@author Alex Conway
  */
 
-/**
- *
- * @author agias
- */
-public class statsObj{
+public class dataObj{
 
     String NAME;
-    double EVENTS;
-    double E_MC_SUM;
-    double E_CAL_SUM;
-    double AVG_E_MC;
-    double AVG_E_CAL;
+    double EVENTS = 0;
+    double E_MC_SUM = 0;
+    double E_CAL_SUM =0;
+    double AVG_E_MC = 0;
+    double AVG_E_CAL = 0;
     
-    IAnalysisFactory af = IAnalysisFactory.create();
+    IAnalysisFactory af;
     ITree TREE;
     IHistogramFactory hf;
     IHistogram1D tpEn;
     IDataPointSetFactory dpsf;
-    IDataPointSet hitsDPS = dpsf.create("hitData","t,x,y,z,E",5);
+    IDataPointSet hitsDPS;
     
-    public statsObj(String name){
+    public dataObj(String name){
         NAME = name;
-        EVENTS = 0;
+        af = IAnalysisFactory.create();
         TREE = af.createTreeFactory().createTree();
         hf = af.createHistogramFactory(TREE);
         dpsf = af.createDataPointSetFactory(TREE);
+        hitsDPS = dpsf.create("hitData","t,x,y,z,E,tp",6);
+        hitsDPS.setTitle(name+"hitsDPs");
     }
     
     //Add MCP energy to E_MC_SUM
@@ -80,6 +80,7 @@ public class statsObj{
                 this.hitsDPS.point(index).coordinate(2).setValue(hit.getPosition()[1]);
                 this.hitsDPS.point(index).coordinate(3).setValue(hit.getPosition()[2]);
                 this.hitsDPS.point(index).coordinate(4).setValue(hit.getRawEnergy());
+                this.hitsDPS.point(index).coordinate(5).setValue(getTPrime(this.hitsDPS.point(index)));
                 index++;
             }
         }
@@ -96,8 +97,20 @@ public class statsObj{
             this.hitsDPS.point(index).coordinate(2).setValue(hit.getPosition()[1]);
             this.hitsDPS.point(index).coordinate(3).setValue(hit.getPosition()[2]);
             this.hitsDPS.point(index).coordinate(4).setValue(hit.getRawEnergy());
+            this.hitsDPS.point(index).coordinate(5).setValue(getTPrime(this.hitsDPS.point(index)));
             index++;
         }
     }
     
+    public double getRadius(IDataPoint hit){
+        double[] point = { 
+            hit.coordinate(1).value(),
+            hit.coordinate(2).value(),
+            hit.coordinate(3).value() };
+        
+        return Math.sqrt(point[0]*point[0]+point[1]*point[1]+point[2]*point[2]);
+    }
+    public double getTPrime(IDataPoint hit){
+        return hit.coordinate(0).value() - getRadius(hit)/299.792458;
+    }
 }
