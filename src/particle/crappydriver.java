@@ -10,7 +10,7 @@ import org.lcsim.event.EventHeader;
  */
 public class crappydriver extends Driver {
     
-    Driver crap;
+    crappyprocessor crap;
     boolean fuck;
     public void runOnce(){
         crap = new crappyprocessor();
@@ -21,6 +21,9 @@ public class crappydriver extends Driver {
         if(!fuck){
             this.runOnce();
         }
-        this.processChildren(event);
+        crap.processcrap(event);
+    }
+    protected void endOfData(){
+        crap.endOfCrappyData();
     }
 }

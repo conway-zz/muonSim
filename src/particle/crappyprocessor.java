@@ -15,10 +15,23 @@ import java.util.List;
 public class crappyprocessor extends Driver {
     
     public crappyprocessor(){
-        
+        af = IAnalysisFactory.create();
+        TREE = af.createTreeFactory().createTree();
+        hf = af.createHistogramFactory(TREE);
+        dpsf = af.createDataPointSetFactory(TREE);
+        pf = af.createPlotterFactory();
+        plot = pf.create();
+        reg = plot.createRegion();
+        hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
+        hist = hf.createHistogram1D("tPrimes","All TPrimes", 200, -.1,.3);;
+        EVENTS = 0;
+        E_MC_SUM = 0;
+        E_CAL_SUM =0;
+        AVG_E_MC = 0;
+        AVG_E_CAL = 0;
     }
     
-    String NAME = "Shit";
+    String NAME = "crappy";
     IAnalysisFactory af;
     ITree TREE;
     IHistogramFactory hf;
@@ -28,6 +41,7 @@ public class crappyprocessor extends Driver {
     IPlotterFactory pf;
     IPlotter plot;
     IPlotterRegion reg;
+    IHistogram1D hist;
     
     double EVENTS;
     double E_MC_SUM ;
@@ -37,47 +51,46 @@ public class crappyprocessor extends Driver {
     
     @Override
     protected void startOfData(){
-        af = IAnalysisFactory.create();
-        TREE = af.createTreeFactory().createTree();
-        hf = af.createHistogramFactory(TREE);
-        dpsf = af.createDataPointSetFactory(TREE);
-        pf = af.createPlotterFactory();
-        plot = pf.create();
-        reg = plot.createRegion();
-        hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
-        EVENTS = 0;
-        E_MC_SUM = 0;
-        E_CAL_SUM =0;
-        AVG_E_MC = 0;
-        AVG_E_CAL = 0;
+        
         System.out.println("data started");
     }
     
-    protected void process(EventHeader event){
+    public void processcrap(EventHeader event){
         
-        System.out.println(E_MC_SUM);
-        System.out.println(E_CAL_SUM);
-        
+        System.out.println(this.E_CAL_SUM);
+        /*
         List<MCParticle> MCs = event.getMCParticles();
         for(MCParticle mc : MCs){
             if(mc.getGeneratorStatus() == mc.FINAL_STATE){
-                E_MC_SUM+= mc.getEnergy();
+                this.E_MC_SUM+= mc.getEnergy();
             }
         }
         int index = 0;
+         * 
+         */
         List<List<SimCalorimeterHit>> hitsCol = event.get(SimCalorimeterHit.class);
         for(List<SimCalorimeterHit> hits : hitsCol){
             for(SimCalorimeterHit hit : hits){
-                E_CAL_SUM += hit.getRawEnergy();
-                hitsDPS.addPoint();
-                hitsDPS.point(index).coordinate(0).setValue(hit.getTime());
-                hitsDPS.point(index).coordinate(1).setValue(hit.getPosition()[0]);
-                hitsDPS.point(index).coordinate(2).setValue(hit.getPosition()[1]);
-                hitsDPS.point(index).coordinate(3).setValue(hit.getPosition()[2]);
-                hitsDPS.point(index).coordinate(4).setValue(hit.getRawEnergy());
-                hitsDPS.point(index).coordinate(5).setValue(getTPrime(this.hitsDPS.point(index)));
+                this.E_CAL_SUM += hit.getRawEnergy();
+                hist.fill(
+                        hit.getTime()-
+                        Math.sqrt(
+                        hit.getPosition()[0]*hit.getPosition()[0]+
+                        hit.getPosition()[1]*hit.getPosition()[1]+
+                        hit.getPosition()[2]*hit.getPosition()[2])/299.792458,
+                        hit.getRawEnergy());
+                /*
+                this.E_CAL_SUM += hit.getRawEnergy();
+                this.hitsDPS.addPoint();
+                this.hitsDPS.point(index).coordinate(0).setValue(hit.getTime());
+                this.hitsDPS.point(index).coordinate(1).setValue(hit.getPosition()[0]);
+                this.hitsDPS.point(index).coordinate(2).setValue(hit.getPosition()[1]);
+                this.hitsDPS.point(index).coordinate(3).setValue(hit.getPosition()[2]);
+                this.hitsDPS.point(index).coordinate(4).setValue(hit.getRawEnergy());
+                this.hitsDPS.point(index).coordinate(5).setValue(getTPrime(this.hitsDPS.point(index)));
                 index++;
-                System.out.println(index);
+                 * 
+                 */
             }
         }
         
@@ -95,20 +108,48 @@ public class crappyprocessor extends Driver {
     public double getTPrime(IDataPoint hit){
         return hit.coordinate(0).value() - getRadius(hit)/299.792458;
     }
-    @Override
-    protected void endOfData(){
-        IHistogram1D rv = hf.createHistogram1D(
-                NAME, 
-                NAME+"tpEn",
-                hitsDPS.size(),
-                hitsDPS.lowerExtent(5),
-                hitsDPS.upperExtent(5));
+    
+    protected void endOfCrappyData(){
+        IHistogram1D inth = integratedHist(this.hist, this.hf, this.E_CAL_SUM, .90);
         
-        for(int i=0; i<hitsDPS.size(); i++){
+    }
+    public IHistogram1D integratedHist(IHistogram1D hist, IHistogramFactory hf,
+            double maximum, double threshhold){    
+        
+        boolean isAboveThresh = false;
+        boolean hitYet = false;
+        double firstTime=0;
+        
+        IHistogram1D intHist = hf.createHistogram1D("int"+hist.title(), 
+                hist.title()+", integrated", 
+                hist.axis().bins(), 
+                hist.axis().lowerEdge(), 
+                hist.axis().upperEdge());
+        
+        double sum = 0;
+        for(int i=0; i<hist.axis().bins() ; i++){
+            double xvalue = hist.axis().binCenter(i);
+            sum += hist.binHeight(i);            
             
-            rv.fill(hitsDPS.point(i).coordinate(5).value(),
-                    hitsDPS.point(i).coordinate(4).value());
+            intHist.fill(xvalue,sum);
+            if(!hitYet){
+                if(sum>0){
+                    hitYet=true;
+                    firstTime=xvalue;
+                }
+            }
+            if(!isAboveThresh) {
+                if(sum>maximum*threshhold){
+                    isAboveThresh = true;
+                    System.out.println(intHist.title());
+                    System.out.println("Threshhold: "+threshhold);
+                    System.out.println("Threshhold reached at "+
+                            (xvalue-firstTime));
+                }
+            }
+            
         }
-        reg.plot(rv);
+        
+        return intHist;
     }
 }
