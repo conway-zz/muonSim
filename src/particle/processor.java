@@ -18,24 +18,30 @@ public class processor extends aidaFunctions {
     boolean hasRun = false;   
     
     //TODO: find a way to autoinstantiate, perhaps?
-    public processor(String[] list){
+    /*public processor(String[] list){
         names = list;
         GROUP = new dataObj("GROUP");
         EM = new dataObj("EM");
         H = new dataObj("H");
     }
+     */
     
     protected void process(EventHeader event){
+        
+        if(!hasRun){
+            runOnce();
+        }
+        
         processGROUP(event, GROUP);
-        processCAL(event, EM, "EM");
-        processCAL(event, EM, "EM");
+       // processCAL(event, EM, "EcalBarrelHits");
+       // processCAL(event, EM, "HcalBarrelHits");
     }
     
     //called when process(event) calls last
     protected void endOfData(){
         graphTpEn(GROUP);
-        graphTpEn(EM);
-        graphTpEn(H);
+        //graphTpEn(EM);
+        //graphTpEn(H);
     }
     
     //TODO: instantiate  statsObj for each name in names
