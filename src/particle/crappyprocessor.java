@@ -53,7 +53,7 @@ public class crappyprocessor extends Driver {
         System.out.println("data started");
     }
     
-    protected void processor(EventHeader event){
+    protected void process(EventHeader event){
         
         System.out.println(E_MC_SUM);
         System.out.println(E_CAL_SUM);
