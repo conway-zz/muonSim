@@ -2,8 +2,9 @@
  * Fills dataObj's
  */
 import org.lcsim.event.EventHeader;
+import org.lcsim.util.Driver;
 
-public abstract class datasetPROCESS implements statsInterface{
+public abstract class datasetPROCESS extends Driver {
     
     //fill stats object for whole detector
     public void processGROUP(EventHeader event, dataObj data){    

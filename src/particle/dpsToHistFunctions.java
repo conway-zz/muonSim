@@ -9,7 +9,7 @@
 
 import hep.aida.*;
 
-public abstract class dpsToHistFunctions implements statsInterface{
+public abstract class dpsToHistFunctions extends datasetPROCESS {
     
     public IHistogram1D graphTpEn(dataObj data){
         IHistogram1D rv = data.hf.createHistogram1D(

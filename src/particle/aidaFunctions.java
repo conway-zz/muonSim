@@ -9,7 +9,7 @@ import java.io.*;
 
 
 
-public abstract class aidaFunctions implements statsInterface{
+public abstract class aidaFunctions extends dpsToHistFunctions{
     
     //
     
