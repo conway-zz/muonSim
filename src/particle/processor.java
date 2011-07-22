@@ -4,18 +4,22 @@
  * uncomment separate processXX(event) methods to use them.
  */
 import org.lcsim.event.EventHeader;
-import org.lcsim.util.Driver;
-/**
- *
- * @author agias
- */
+import hep.aida.*;
+
+
 public class processor extends aidaFunctions {
     
     String[] names;
     dataObj GROUP;
-    dataObj EM;
-    dataObj H;
+    //dataObj EM;
+    //dataObj H;
     boolean hasRun = false;   
+    
+    IAnalysisFactory af;
+    ITree TREE;
+    IHistogramFactory hf;
+    IHistogram1D tpEn;
+    IDataPointSetFactory dpsf;
     
     //TODO: find a way to autoinstantiate, perhaps?
     /*public processor(String[] list){
@@ -26,11 +30,21 @@ public class processor extends aidaFunctions {
     }
      */
     
+    //TODO: instantiate  statsObj for each name in names
+    protected void startOfData(){
+        af = IAnalysisFactory.create();
+        TREE = af.createTreeFactory().createTree();
+        hf = af.createHistogramFactory(TREE);
+        dpsf = af.createDataPointSetFactory(TREE);
+        GROUP = new dataObj();
+        //EM = new dataObj();
+        //H = new dataObj();
+        GROUP.hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
+        //EM.hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
+        //H.hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
+    }
+    
     protected void process(EventHeader event){
-        
-        if(!hasRun){
-            runOnce();
-        }
         
         processGROUP(event, GROUP);
        // processCAL(event, EM, "EcalBarrelHits");
@@ -39,16 +53,10 @@ public class processor extends aidaFunctions {
     
     //called when process(event) calls last
     protected void endOfData(){
-        graphTpEn(GROUP);
-        //graphTpEn(EM);
-        //graphTpEn(H);
+        graphTpEn(GROUP, hf);
+        //graphTpEn(EM, hf);
+        //graphTpEn(H, hf);
     }
     
-    //TODO: instantiate  statsObj for each name in names
-    public void runOnce(){
-        GROUP = new dataObj("GROUP");
-        EM = new dataObj("EM");
-        H = new dataObj("H");
-        hasRun = true;
-    }
+    
 }

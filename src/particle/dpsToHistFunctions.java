@@ -11,8 +11,8 @@ import hep.aida.*;
 
 public abstract class dpsToHistFunctions extends datasetPROCESS {
     
-    public IHistogram1D graphTpEn(dataObj data){
-        IHistogram1D rv = data.hf.createHistogram1D(
+    public IHistogram1D graphTpEn(dataObj data, IHistogramFactory hf){
+        IHistogram1D rv = hf.createHistogram1D(
                 data.NAME, 
                 data.NAME+"tpEn",
                 data.hitsDPS.size(),

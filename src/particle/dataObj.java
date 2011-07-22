@@ -20,23 +20,31 @@ public class dataObj{
     double E_CAL_SUM =0;
     double AVG_E_MC = 0;
     double AVG_E_CAL = 0;
-    
+    /*
     IAnalysisFactory af;
     ITree TREE;
     IHistogramFactory hf;
     IHistogram1D tpEn;
     IDataPointSetFactory dpsf;
+     * */
+     
     IDataPointSet hitsDPS;
     
-    public dataObj(String name){
+    /*
+    public dataObj(String name, IDataPointSetFactory dpsf){
+        
         NAME = name;
+        /*
         af = IAnalysisFactory.create();
         TREE = af.createTreeFactory().createTree();
         hf = af.createHistogramFactory(TREE);
         dpsf = af.createDataPointSetFactory(TREE);
+         * 
+         
         hitsDPS = dpsf.create("hitData","t,x,y,z,E,tp",6);
         hitsDPS.setTitle(name+"hitsDPs");
-    }
+    }*/
+
     
     //Add MCP energy to E_MC_SUM
     public void addMCE(EventHeader event){
