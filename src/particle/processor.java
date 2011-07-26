@@ -1,62 +1,51 @@
 /*
- * runs processor when called by JAS3.
- * Run runOnce() first
- * uncomment separate processXX(event) methods to use them.
+ * The actual Driver.
+ * Use this to instantiate datsets,
+ * run dataset.subProcess()
+ * run this.postProcess()
  */
 import org.lcsim.event.EventHeader;
+import org.lcsim.util.Driver;
 import hep.aida.*;
 
 
-public class processor extends aidaFunctions {
+public class processor extends Driver {
     
-    String[] names;
-    dataObj GROUP;
-    //dataObj EM;
-    //dataObj H;
-    boolean hasRun = false;   
-    
+    String[] calorimeters = { "EcalBarrelHits", "HcalBarrelHits" };
     IAnalysisFactory af;
     ITree TREE;
     IHistogramFactory hf;
-    IHistogram1D tpEn;
-    IDataPointSetFactory dpsf;
+    String cal;
+    double EVENTS;
+    double E_MC;
+    double E_CAL;
+    dataset EM;
+    dataset H;
+    dataset Mu;
     
-    //TODO: find a way to autoinstantiate, perhaps?
-    /*public processor(String[] list){
-        names = list;
-        GROUP = new dataObj("GROUP");
-        EM = new dataObj("EM");
-        H = new dataObj("H");
-    }
-     */
-    
-    //TODO: instantiate  statsObj for each name in names
+    //TODO: auto-instantiate by string[] calorimeters
+    //
+    //@Override
     protected void startOfData(){
         af = IAnalysisFactory.create();
         TREE = af.createTreeFactory().createTree();
         hf = af.createHistogramFactory(TREE);
-        dpsf = af.createDataPointSetFactory(TREE);
-        GROUP = new dataObj();
-        //EM = new dataObj();
-        //H = new dataObj();
-        GROUP.hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
-        //EM.hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
-        //H.hitsDPS =  dpsf.create("hitData","t,x,y,z,E,tp",6);
-    }
-    
-    protected void process(EventHeader event){
         
-        processGROUP(event, GROUP);
-       // processCAL(event, EM, "EcalBarrelHits");
-       // processCAL(event, EM, "HcalBarrelHits");
+        EM = new dataset(calorimeters);
+        
+    }
+    //@Override
+    protected void process(EventHeader event){
+        EM.subProcess(event);
     }
     
     //called when process(event) calls last
+    @Override
     protected void endOfData(){
-        graphTpEn(GROUP, hf);
-        //graphTpEn(EM, hf);
-        //graphTpEn(H, hf);
-    }
-    
-    
+        postProcessor post = new postProcessor();
+        post.integratedHist(EM.TPrimesEn,.95);
+        post.windowEfficiency(EM.TPrimesEn);
+        post.windowEfficiency(H.TPrimesEn);
+        post.windowEfficiency(post.sumHist(EM.TPrimesEn, H.TPrimesEn));
+    }    
 }
