@@ -1,6 +1,7 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * newProcssor, the latest and greatest in processing technology
+ * now with everything in one hard to read java file!
+ * @author Alex Conway
  */
 
 import java.util.List;
@@ -11,10 +12,9 @@ import org.lcsim.util.Driver;
 import hep.aida.*;
 import java.util.List;
 import java.io.*;
-/**
- *
- * @author agias
- */
+
+
+
 public class newProcessor extends Driver{
     
     IAnalysisFactory af;
@@ -42,6 +42,7 @@ public class newProcessor extends Driver{
     IHistogram1D TPrimesEn;
     IHistogram1D TPrimesEnEM;
     IHistogram1D TPrimesEnH;
+    IHistogram1D TPrimesFixd;
     IHistogram1D fractRemEnergy;
     IHistogram1D HtoEM;
     IHistogram1D EMtoH;
@@ -53,6 +54,7 @@ public class newProcessor extends Driver{
     IHistogram1D windowEff;
     IHistogram1D windowEffEM;
     IHistogram1D windowEffH;
+    IHistogram1D fractRemEnergyEM;
     
     int EVENTS;
     
@@ -112,6 +114,10 @@ public class newProcessor extends Driver{
         fractRemEnergy = hf.createHistogram1D(
                 "E_H over (E_MC - E_EM) ",
                 "fractRemEnergy ",
+                200,0,1);
+        fractRemEnergyEM = hf.createHistogram1D(
+                "E_EM over (E_MC - E_EH) ",
+                "fractRemEnergyEM ",
                 200,0,1);
         //Plot ratios of E_H to E_EM
         HtoEM = hf.createHistogram1D(
@@ -229,17 +235,17 @@ public class newProcessor extends Driver{
         TPrimesEn = hf.createHistogram1D(
                 "Tprimes weighted by energy ",
                 "TPrimesEn ",
-               100000,-1000,9000);
+               2000,-1,9);
         TREE.cd("/EM/");
         TPrimesEnEM = hf.createHistogram1D(
                 "Tprimes weighted by energy ",
                 "TPrimesEn ",
-                100000,-1000,9000);
+                2000,-1,9);
         TREE.cd("/H/");
         TPrimesEnH = hf.createHistogram1D(
                 "Tprimes weighted by energy ",
                 "TPrimesEn ",
-                100000,-1000,9000);
+                2000,-1,9);
     }
     
     protected void process(EventHeader event){
@@ -262,6 +268,7 @@ public class newProcessor extends Driver{
         fractMCenergy.fill((E_EM+E_H)/E_MC);
         
         fractRemEnergy.fill(E_H/(E_MC-E_EM));
+        fractRemEnergyEM.fill(E_EM/(E_EM+E_H));
         
         HtoEM.fill(E_H/E_EM);
         EMtoH.fill(E_EM/E_H);
@@ -361,8 +368,10 @@ public class newProcessor extends Driver{
     }
     
     protected void endOfData(){
-        TREE.cd("/EMH/");
+        TREE.mkdir("/post/");
+        TREE.cd("/post/");
         TPrimesEnInt = integratedHist(TPrimesEn, .9);
+        TPrimesFixd = histFixer(TPrimesEn);
         windowEffEM = windowEfficiency(TPrimesEM);
         windowEffH = windowEfficiency(TPrimesH);
         windowEff = windowEfficiency(TPrimesEn);
@@ -481,7 +490,7 @@ public class newProcessor extends Driver{
     
     public double windowInt(IHistogram1D hist, int min, int max){
         
-        int bins = max-min;
+        int bins = max-min+1;
         double sum = 0;
         int index = min;
         for(int i=0; i<bins ; i++){
@@ -489,6 +498,44 @@ public class newProcessor extends Driver{
             index += i;            
         }
         return sum;
+    }
+    
+    public IHistogram1D histFixer(IHistogram1D hist){
+        int meanbin = hist.coordToIndex(hist.mean());
+        int lowbin=0;
+        double halfen = hist.sumBinHeights()/2;
+        double sum = 0;
+        boolean hityet = false;
+        for(int i=0; i<hist.axis().bins(); i++){
+            if(!hityet){
+                sum += hist.binHeight(meanbin-i);
+                if(sum>.99*halfen){
+                    lowbin = (meanbin-i);
+                    hityet = true;
+                }
+            }
+        }
+        hityet = false;
+        sum = 0;
+        int highbin=0;
+        for(int i=1; i<hist.axis().bins(); i++){
+            if(!hityet){
+                sum += hist.binHeight(meanbin+i);
+                if(sum>.99*halfen){
+                    lowbin = (meanbin+i);
+                    hityet = true;
+                    break;
+                }
+            }
+        }
+        IHistogram1D rv = hf.createHistogram1D(
+                "fixed "+hist.title(),
+                "fixed "+hist.title(),
+                highbin-lowbin, hist.axis().binCenter(lowbin),hist.axis().binCenter(highbin));
+        for(int i=lowbin; i<highbin; i++){
+            rv.fill(hist.axis().binCenter(i), hist.binHeight(i));
+        }
+        return rv;
     }
     
     //creates a CSV file from histogram1D
